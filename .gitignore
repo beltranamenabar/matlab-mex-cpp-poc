@@ -38,3 +38,6 @@
 # Build directories
 out/
 build/
+
+# Matlab build files
+*.mexw64
