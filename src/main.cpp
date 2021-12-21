@@ -4,8 +4,7 @@
 class MexFunction : public matlab::mex::Function {
 
 public:
-
-    MexFunction () : matlabPtr(getEngine()) {}
+    MexFunction() : matlabPtr(getEngine()) {}
 
     void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) {
 
@@ -14,26 +13,31 @@ public:
         matlab::data::Array obj(inputs[0]);
         matlab::data::Array data(matlabPtr->getProperty(obj, u"Data"));
 
-        stream << data.getDimensions()[0] << " " << data.getDimensions()[1];
+        stream << "Data dimensions" << data.getDimensions()[0] << " " << data.getDimensions()[1];
+        this->displayOnMATLAB(stream);
 
-        matlab::data::TypedArray<double> points(matlabPtr->getProperty(data[0], u"Points"));
-        matlab::data::TypedArray<uint16_t> triangles(matlabPtr->getProperty(data[0], u"ConnectivityList"));
+        matlab::data::Array points = matlabPtr->getProperty(data, u"Points");
+        matlab::data::Array triangles = matlabPtr->getProperty(data, u"ConnectivityList");
 
-        matlab::data::Array polygons(matlabPtr->getProperty(obj, u"Polygon"));
+        stream << "points dimensions" << points.getDimensions()[0] << " " << points.getDimensions()[1];
+        stream << "triangles dimensions" << triangles.getDimensions()[0] << " " << triangles.getDimensions()[1];
+        this->displayOnMATLAB(stream);
 
-        for(int i = 0; i < polygons.getDimensions()[0]; i++) {
+        matlab::data::Array polygons = matlabPtr->getProperty(obj, u"Polygon");
 
-            uint16_t p0 = triangles[i][0];
-            uint16_t p1 = triangles[i][1];
-            uint16_t p2 = triangles[i][2];
+        stream << "polygons dimensions" << polygons.getDimensions()[0] << " " << polygons.getDimensions()[1];
+        this->displayOnMATLAB(stream);
 
-            matlab::data::TypedArray<double> polygon = factory.createArray(
-                {3,2},
-                {
-                    points[p0][0], points[p1][0], points[p2][0],
-                    points[p0][1], points[p1][1], points[p2][1]
-                }
-            );
+        for (int i = 0; i < polygons.getDimensions()[0]; i++) {
+
+            unsigned int p0 = triangles[i][0];
+            unsigned int p1 = triangles[i][1];
+            unsigned int p2 = triangles[i][2];
+
+            auto polygon = factory.createArray(
+                {3, 2},
+                {double(points[p0][0]), double(points[p1][0]), double(points[p2][0]),
+                 double(points[p0][1]), double(points[p1][1]), double(points[p2][1])});
             matlabPtr->setProperty(polygons, i, u"Vertices", polygon);
         }
         // Return modified object
